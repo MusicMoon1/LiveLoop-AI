@@ -25,11 +25,28 @@ def plot(cqt):
     fig, ax = plt.subplots()
     img = librosa.display.specshow(librosa.amplitude_to_db(cqt, ref=np.max),
                                     sr=sr, x_axis='time', y_axis='cqt_note', ax=ax)
-    ax.set_title('Constant-Q power spectrum')
+    ax.set_title('CQT -- close this to proceed')
     fig.colorbar(img, ax=ax, format="%+2.0f dB")
 
     plt.tight_layout()
     plt.show()
+
+
+
+def active_notes(midi_data):
+    piano_roll = midi_data.get_piano_roll()
+
+    plt.imshow(piano_roll, aspect='auto', origin='lower', cmap='gray_r')
+    plt.xlabel('Time')
+    plt.ylabel('Pitch')
+    plt.title('Piano Roll -- close this to proceed')
+    plt.show()
+
+    active_notes = []
+    for row_idx in range(piano_roll.shape[0]):
+        if np.any(piano_roll[row_idx] > 0):
+            active_notes.append(row_idx)
+    print(f"active notes in this loop: {active_notes}")
 
 
 
@@ -39,10 +56,8 @@ if __name__ == "__main__":
     cqt = cqt(samples, sr)
     plot(cqt)
 
-    model_output, midi_data, note_events = predict(audiofile)
+    model_output, midi_data, note_events = predict(audiofile)  # uses Spotify's Basic Pitch
     # model_output: raw inference output; shape (time_frames, 88)
     # midi_data: pretty_midi object; transcribed midi data from model_output
     # note_events: list of note events derived from model_output: (2.1955696145124715, 2.334889342403628, 53, 0.30267486, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
-    
-    print("break")
-    
+    active_notes(midi_data)
