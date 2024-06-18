@@ -1,9 +1,9 @@
 These scripts should be run in a conda environment with the following requirements:
 
-python 3.11 (important!)
-basic-pitch
-librosa
-numpy
+1. python 3.11 (important!)  
+2. basic-pitch  
+3. librosa  
+4. numpy  
 
 Install example:  
 <code>conda create -n genmus_bcn2024 python=3.11
