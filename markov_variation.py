@@ -3,10 +3,11 @@ import random
 
 
 chord_formulas = {
-    'maj': [0, 4, 3],
-    'min': [0, 3, 4],
-    'aug': [0, 4, 4],
-    'dim': [0, 3, 3],
+    """ Intervals in semitones. Root note (0) is added in generate_chord_notes() """
+    'maj': [4, 3],
+    'min': [3, 4],
+    'aug': [4, 4],
+    'dim': [3, 3],
     'maj7': [4, 3, 4],
     'min7': [3, 4, 3],
     'dom7': [4, 3, 3],
@@ -22,7 +23,6 @@ def generate_chord_notes(root_note, chord_type):
     """ Generates a chord given a root note. """
     intervals = chord_formulas[chord_type]
     return [root_note + sum(intervals[:i]) for i in range(len(intervals))]
-
 
 root_note = 60  # example root note (C=60 in MIDI)
 chord_notes = {}
@@ -65,5 +65,5 @@ def generate_variation(melody, length=10):
 input_melody = [60, 62, 64, 65, 67]  # Example input melody (MIDI notes)
 output_melody = generate_variation(input_melody)  # Generate a variation of the input melody
 
-print("Input Melody:", input_melody)
-print("Generated Variation:", output_melody)
+print(f"Input melody: {input_melody}")
+print(f"Generated variation: {output_melody}")
