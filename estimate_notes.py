@@ -62,3 +62,4 @@ if __name__ == "__main__":
     # midi_data: pretty_midi object; transcribed midi data from model_output
     # note_events: list of note events derived from model_output: (2.1955696145124715, 2.334889342403628, 53, 0.30267486, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
     active_notes(midi_data)
+
