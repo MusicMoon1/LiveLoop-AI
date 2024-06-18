@@ -6,8 +6,7 @@ librosa
 numpy
 
 Install example:  
-<code>
-conda create -n genmus_bcn2024 python=3.11
+<code>conda create -n genmus_bcn2024 python=3.11
 pip install basic-pitch
 pip install librosa
 pip install numpy
