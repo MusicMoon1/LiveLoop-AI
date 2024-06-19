@@ -49,7 +49,6 @@ def active_notes(midi_data):
     print(f"active notes in this loop: {active_notes}")
 
 
-
 if __name__ == "__main__":
     audiofile = "61228__the-sacha-rush__piano1.wav"
     samples, sr = inputaudio(audiofile)
