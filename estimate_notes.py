@@ -2,10 +2,9 @@ import numpy as np
 import essentia.standard as es
 import pickle
 
-from markov_sequence_generator import generate_new_sequence, create_midi_file
-
 
 def transpose_notes(notes, octave=0):
+    """ Transpose Notes to an Octave Above 60 """
     if min(notes) >= 60:
         return notes
     notes = [int(note) + 12 for note in notes]
@@ -14,7 +13,7 @@ def transpose_notes(notes, octave=0):
 
 
 def estimate_pitch_melodia(audiofile):
-    # Load File
+    """ Estimate Pitch from Audio File """
     loader = es.EqloudLoader(filename=audiofile, sampleRate=44100)
     audio = loader()
 
@@ -31,7 +30,7 @@ def get_chord_from_audio(audiofile):
     all_notes = set(estimate_pitch_melodia(audiofile))
     # Transpose Notes so that Lowest Note is above 60
     all_notes_transposed = sorted(transpose_notes(all_notes))
-    print(f'All Present Notes: {all_notes}')
+    print(f'All Present Notes: {all_notes_transposed}')
 
     # Find Closest Chord
     chord_length = len(all_notes_transposed)
@@ -45,22 +44,6 @@ def get_chord_from_audio(audiofile):
 
     return input_chord, chord_length
 
-
-# def get_closest_chord(input_chord, unique_midi_chords, chord_length):
-#     """ Get Closest Chord from List of Unique Chords """
-#     # Get Chords with same length
-#     chords_same_length = [ch for ch in unique_midi_chords if len(ch) == chord_length]
-#
-#     # Find Closest Chord to Input
-#     min_distance = np.inf
-#     closest_chord = None
-#     for chord in chords_same_length:
-#         distance = np.linalg.norm(np.array(chord) - np.array(input_chord))
-#         if distance < min_distance:
-#             min_distance = distance
-#             closest_chord = chord
-#
-#     return closest_chord
 
 def get_weighted_distance(chord1, chord2, weight):
     """Calculate weighted Euclidean distance between two chords"""
@@ -88,6 +71,7 @@ def get_closest_chord(input_chord, unique_midi_chords, chord_length, weight=10.0
 
 if __name__ == "__main__":
 
+    # Testing Estimation
     file_name = 'Loop1_ragtime'
     audiofile = f"data/loops/{file_name}.aif"
 
@@ -99,21 +83,6 @@ if __name__ == "__main__":
 
     closest_chord = get_closest_chord(input_chord, unique_midi_chords, chord_length)
     print(f'Input Chord: {input_chord} \n Most Similar Chord {closest_chord}')
-
-    # Generate Sequence of Chords starting from most similar one
-    # Settings for MIDI File Generation
-    chord_duration = 2
-    out_size = 8
-
-    # Load the dictionary from a file
-    with open('transition_matrix.pkl', 'rb') as f:
-        transition_matrix = pickle.load(f)
-
-    new_sequence = generate_new_sequence(transition_matrix, size=out_size)
-    new_sequence = [list(s) for s in new_sequence]
-
-    # Create MIDI File
-    create_midi_file(new_sequence, chord_duration=chord_duration, file_name=file_name)
 
 
 

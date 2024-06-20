@@ -129,7 +129,7 @@ def chords_to_midi_notes(new_sequence: list[str]) -> list[list[int]]:
     new_sequence_midi = []
     for chord_notation in new_sequence:
         chord_midi = chord_to_midi.parse_chord(annotation=chord_notation)
-        if chord_midi:
+        if chord_midi and len(chord_midi) >= 3:
             new_sequence_midi.append(chord_midi)
     return new_sequence_midi
 
@@ -202,27 +202,13 @@ def main():
     """ Runs Estimation, Chord Sequence Generation and MIDI File Creation """
 
     # Settings for Markov Chain
-    m_order = 3                 # Order for Markov Chain
+    m_order = 2                 # Order for Markov Chain
     path = "data/jams"          # Path to Jams
-    generate_new = True         # Enable to generate new transition matrix
 
     # Learn Chord Progressions for Markov Chain
-    if generate_new:
-        generate_transition_matrix(path, m_order=m_order)
+    generate_transition_matrix(path, m_order=m_order)
 
-    # Settings for MIDI File Generation
-    chord_duration = 2
-    out_size = 8
-
-    # Load the dictionary from a file
-    with open('transition_matrix.pkl', 'rb') as f:
-        transition_matrix = pickle.load(f)
-
-    # Generate New Sequence
-    new_sequence = generate_new_sequence(transition_matrix, size=out_size)
-
-    # Create MIDI File
-    create_midi_file(new_sequence, chord_duration=chord_duration)
+    print('Saved Transition Matrix and Unique Chords to transition_matrix.pkl and unique_midi_chords.pkl')
 
 
 if __name__ == "__main__":
