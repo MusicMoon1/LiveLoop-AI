@@ -10,6 +10,7 @@ Install example:
 pip install basic-pitch
 pip install librosa
 pip install numpy
+conda activate genmus_bcn2024
 </code>
 
 Basic Pitch needs Tensorflow and Python 3.11 to install the correct dependencies.

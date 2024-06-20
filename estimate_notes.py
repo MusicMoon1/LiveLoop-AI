@@ -34,6 +34,7 @@ def plot(cqt):
 
 
 def active_notes(midi_data):
+    """ Gets list of active notes from the midi piano roll. """
     piano_roll = midi_data.get_piano_roll()
 
     plt.imshow(piano_roll, aspect='auto', origin='lower', cmap='gray_r')
