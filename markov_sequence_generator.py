@@ -1,5 +1,6 @@
 import jams
 import os
+import pickle
 import numpy as np
 from music21 import stream, chord, note, meter
 from chord_to_midi import chord_to_midi
@@ -38,15 +39,16 @@ def compute_transition_chain(sequence, m_order=2):
     # Iterate Through Sequence
     for i in range(m_order, len(sequence)):
         # Get Current State
-        current_state = sequence[i]
+        current_state = tuple(sequence[i])
         # Get n Previous States
         prev_states = sequence[i - m_order:i]
+        prev_states = tuple([tuple(s) for s in prev_states])
         # Create Key if not existant
-        if tuple(prev_states) not in transition_states:
-            transition_states[tuple(prev_states)] = [current_state]
+        if prev_states not in transition_states:
+            transition_states[prev_states] = [current_state]
         # Add Current Value to Key if already occured
         else:
-            transition_states[tuple(prev_states)].append(current_state)
+            transition_states[prev_states].append(current_state)
 
     return transition_states
 
@@ -66,7 +68,6 @@ def generate_new_sequence(transition_states, size=100):
     # Initialise New Sequence with starting points
     new_sequence = list(start)
 
-    no_matching_state = 0
     # Generate Sequence
     for _ in range(size):
         # Get Current State
@@ -77,13 +78,10 @@ def generate_new_sequence(transition_states, size=100):
         else:
             # If State does not exist Lower Order
             potential_next_states = get_lower_order_state(transition_states, current_state)
-            no_matching_state += 1
         # Pick Random State from Potential States
         next_state = potential_next_states[np.random.randint(0, len(potential_next_states))]
         # Append Next State to Sequence
         new_sequence.append(next_state)
-
-    print("found no matching state for {} states".format(no_matching_state))
 
     return new_sequence
 
@@ -121,8 +119,18 @@ def chords_to_midi_notes(new_sequence: list[str]) -> list[list[int]]:
     """ Convert List of Chords to List of MIDI Notes """
     new_sequence_midi = []
     for chord_notation in new_sequence:
-        new_sequence_midi.append(chord_to_midi.parse_chord(annotation=chord_notation))
+        chord_midi = chord_to_midi.parse_chord(annotation=chord_notation)
+        if chord_midi:
+            new_sequence_midi.append(chord_midi)
     return new_sequence_midi
+
+
+def chord_mapping(chord_progressions_all: list[str]) -> tuple[list[str], dict[str, int], dict[int, str]]:
+    # Get unique chords and create a mapping between chord notation and index
+    unique_chords = list(set(chord_progressions_all))
+    chtoi = {ch: i for i, ch in enumerate(unique_chords)}
+    itoch = {v: k for k, v in chtoi.items()}
+    return unique_chords, chtoi, itoch
 
 
 def create_midi_file(new_sequence_midi: list[list[int]], chord_duration: float = 2) -> None:
@@ -153,11 +161,11 @@ def create_midi_file(new_sequence_midi: list[list[int]], chord_duration: float =
     print(f"MIDI file saved to {midi_file_path}")
 
 
-def main():
+def generate_transition_matrix(data_path, m_order: int = 3) -> None:
+    """ Parse Choco Chord Data into Transition Matrix and write to file """
+
     # Define path to jams files
-    m_order = 2
-    path = "data/jams"
-    files = load_file_list(path)
+    files = load_file_list(data_path)
 
     # Retrieve chord progressions from all files
     chord_progressions = get_progressions(files)
@@ -166,20 +174,40 @@ def main():
         if isinstance(item, str)
     ]
 
-    # Get unique chords and create a mapping between chord notation and index
-    unique_chords = set(chord_progressions_all)
-    chtoi = {ch: i for i, ch in enumerate(unique_chords)}
-    itoch = {v: k for k, v in chtoi.items()}
+    chord_progressions_notes = chords_to_midi_notes(chord_progressions_all)
 
     # Generate New Sequence based on Markov Chain
-    transition_matrix = compute_transition_chain(chord_progressions_all, m_order=m_order)
-    new_sequence = generate_new_sequence(transition_matrix, size=128)
+    transition_matrix = compute_transition_chain(chord_progressions_notes, m_order=m_order)
 
-    # Convert Chords to MIDI Notes
-    new_sequence_midi = chords_to_midi_notes(new_sequence)
+    # Save the dictionary to a file
+    with open('transition_matrix.pkl', 'wb') as f:
+        pickle.dump(transition_matrix, f)
+
+
+def main():
+
+    # Settings for Markov Chain
+    m_order = 3             # Order for Markov Chain
+    path = "data/jams"      # Path to Jams
+    generate_new = False    # Enable to generate new transition matrix
+
+    # Learn Chord Progressions for Markov Chain
+    if generate_new:
+        generate_transition_matrix(path, m_order=m_order)
+
+    # Settings for MIDI File Generation
+    chord_duration = 2
+    out_size = 8
+
+    # Load the dictionary from a file
+    with open('transition_matrix.pkl', 'rb') as f:
+        transition_matrix = pickle.load(f)
+
+    new_sequence = generate_new_sequence(transition_matrix, size=out_size)
+    new_sequence = [list(s) for s in new_sequence]
 
     # Create MIDI File
-    create_midi_file(new_sequence_midi, chord_duration=2)
+    create_midi_file(new_sequence, chord_duration=chord_duration)
 
 
 if __name__ == "__main__":

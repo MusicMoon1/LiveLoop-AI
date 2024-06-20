@@ -51,13 +51,18 @@ def active_notes(midi_data):
 
 if __name__ == "__main__":
     audiofile = "61228__the-sacha-rush__piano1.wav"
-    samples, sr = inputaudio(audiofile)
-    cqt = cqt(samples, sr)
-    plot(cqt)
+    # samples, sr = inputaudio(audiofile)
+    # cqt = cqt(samples, sr)
+    # plot(cqt)
 
+    # Predict Notes
     model_output, midi_data, note_events = predict(audiofile)  # uses Spotify's Basic Pitch
-    # model_output: raw inference output; shape (time_frames, 88)
-    # midi_data: pretty_midi object; transcribed midi data from model_output
-    # note_events: list of note events derived from model_output: (2.1955696145124715, 2.334889342403628, 53, 0.30267486, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
-    active_notes(midi_data)
+    # Get All Notes Played as Midi Notes
+    all_notes = []
+    for instrument in midi_data.instruments:
+        for note in instrument.notes:
+            all_notes.append(note.pitch)
+
+    print(f'All Present Notes: {all_notes}')
+
 
