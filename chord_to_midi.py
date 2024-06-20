@@ -20,10 +20,7 @@ class Chord2MidiConverter:
 
     @staticmethod
     def delace_annotation(annotation: str):
-        """ Delace Chord Annotation into Root, Chord, Extension, and Inversion
-        :parameter annotation: str
-        :return: tuple(str, str, str, str)
-        """
+        """ Delace Chord Annotation into Root, Chord, Extension, and Inversion """
 
         # Add a period to the end of the annotation to make the regex work
         annotation += '.'

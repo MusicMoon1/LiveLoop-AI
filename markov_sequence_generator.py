@@ -2,12 +2,13 @@ import jams
 import os
 import pickle
 import numpy as np
-from music21 import stream, chord, note, meter
+
+from music21 import stream, chord, meter
 from chord_to_midi import chord_to_midi
 
 
 def load_file_list(path):
-    # Path is folder containing all the jams files
+    """ Load list of files from a directory """
     return [file for file in os.listdir(path) if file.endswith(".jams")]
 
 
@@ -19,6 +20,7 @@ def get_chord_progression(file: str = None) -> list[str]:
 
 
 def get_progressions(files: list[str] = None) -> list[list[str]]:
+    """ Return chord progressions from all files """
     all_chord_progressions = []
     for file in files:
         all_chord_progressions.append(get_chord_progression(file))
@@ -53,7 +55,7 @@ def compute_transition_chain(sequence, m_order=2):
     return transition_states
 
 
-def generate_new_sequence(transition_states, size=100):
+def generate_new_sequence(start=None, transition_states=None, size=100):
     """
     ---- Generate New Sequence from Transition States ----
     Parameters:
@@ -64,7 +66,14 @@ def generate_new_sequence(transition_states, size=100):
     """
     # Get Starting Point
     # start = next(iter(transition_states))
-    start = list(transition_states)[np.random.randint(len(list(transition_states)))]
+    if not start:
+        start = list(transition_states)[np.random.randint(len(list(transition_states)))]
+
+    # Start with Sequence starting with start chord
+    # Get first states of transition states
+    starting_states = [key for key in transition_states.keys() if key[0] == start]
+    start = starting_states[np.random.randint(0, len(starting_states))]
+
     # Initialise New Sequence with starting points
     new_sequence = list(start)
 
@@ -83,7 +92,7 @@ def generate_new_sequence(transition_states, size=100):
         # Append Next State to Sequence
         new_sequence.append(next_state)
 
-    return new_sequence
+    return [list(s) for s in new_sequence]
 
 
 def get_lower_order_state(transition_states, current_state):
@@ -125,15 +134,15 @@ def chords_to_midi_notes(new_sequence: list[str]) -> list[list[int]]:
     return new_sequence_midi
 
 
-def chord_mapping(chord_progressions_all: list[str]) -> tuple[list[str], dict[str, int], dict[int, str]]:
-    # Get unique chords and create a mapping between chord notation and index
+def get_unique_midi_chords(chord_progressions_all: list[str]) -> tuple[list[str], dict[str, int], dict[int, str]]:
+    """ Get unique chords and create a mapping between chord notation and index """
     unique_chords = list(set(chord_progressions_all))
     chtoi = {ch: i for i, ch in enumerate(unique_chords)}
     itoch = {v: k for k, v in chtoi.items()}
     return unique_chords, chtoi, itoch
 
 
-def create_midi_file(new_sequence_midi: list[list[int]], chord_duration: float = 2) -> None:
+def create_midi_file(new_sequence_midi: list[list[int]], chord_duration: float = 2, file_name='midi') -> None:
     """ Create MIDI File from List of MIDI Notes """
     # Create a music21 score
     score = stream.Score()
@@ -156,7 +165,7 @@ def create_midi_file(new_sequence_midi: list[list[int]], chord_duration: float =
     score.append(chord_part)
 
     # Save the score to a MIDI file
-    midi_file_path = 'chord_progression.mid'
+    midi_file_path = f'data/midi/{file_name}.mid'
     score.write('midi', fp=midi_file_path)
     print(f"MIDI file saved to {midi_file_path}")
 
@@ -176,6 +185,11 @@ def generate_transition_matrix(data_path, m_order: int = 3) -> None:
 
     chord_progressions_notes = chords_to_midi_notes(chord_progressions_all)
 
+    # Save Set of Unique Chords
+    unique_midi_chords = set([tuple(ch) for ch in chord_progressions_notes])
+    with open('unique_midi_chords.pkl', 'wb') as f:
+        pickle.dump(unique_midi_chords, f)
+
     # Generate New Sequence based on Markov Chain
     transition_matrix = compute_transition_chain(chord_progressions_notes, m_order=m_order)
 
@@ -185,11 +199,12 @@ def generate_transition_matrix(data_path, m_order: int = 3) -> None:
 
 
 def main():
+    """ Runs Estimation, Chord Sequence Generation and MIDI File Creation """
 
     # Settings for Markov Chain
-    m_order = 3             # Order for Markov Chain
-    path = "data/jams"      # Path to Jams
-    generate_new = False    # Enable to generate new transition matrix
+    m_order = 3                 # Order for Markov Chain
+    path = "data/jams"          # Path to Jams
+    generate_new = True         # Enable to generate new transition matrix
 
     # Learn Chord Progressions for Markov Chain
     if generate_new:
@@ -203,8 +218,8 @@ def main():
     with open('transition_matrix.pkl', 'rb') as f:
         transition_matrix = pickle.load(f)
 
+    # Generate New Sequence
     new_sequence = generate_new_sequence(transition_matrix, size=out_size)
-    new_sequence = [list(s) for s in new_sequence]
 
     # Create MIDI File
     create_midi_file(new_sequence, chord_duration=chord_duration)
@@ -212,3 +227,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
