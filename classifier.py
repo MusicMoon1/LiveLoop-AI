@@ -5,12 +5,16 @@ import pandas as pd
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import LabelEncoder
+from sklearn import preprocessing
 
 
 # labels: chords
 # inputs: midi notes
 # problem: inputs are variable length
 # solution: find longest vector, append shorter vectors with -1
+
+minmax_norm = False
+standardization = False
 
 
 def load_data():
@@ -34,11 +38,35 @@ def load_data():
 
 
 
+def preprocess_data(data):
+    if minmax_norm:
+        print(f"### min-max norm ...")
+        print(f"before -> max: {np.max(data)}, min: {np.min(data)}")
+        data = (data - np.min(data)) / (np.max(data)- np.min(data))
+        print(f"after --> max: {np.max(data)}, min: {np.min(data)}")
+    else:
+        print(f"### min-max norm disabled")
+
+    if standardization:
+        print("### Data Standardization")
+        print(f"before -> mean: {np.mean(data)}, std: {np.std(data)}")
+        scaler = preprocessing.StandardScaler().fit(data)
+        data = scaler.transform(data)
+        print(f"after --> mean: {np.mean(data)}, std: {np.std(data)}")
+        print(f"after --> max: {np.max(data)}, min: {np.min(data)}")
+    else:
+        print("### Data Standardization disabled")
+
+    return data
+
+
+
 def classify(data, labels):
     # Encode string labels to integers
     label_encoder = LabelEncoder()
     y_encoded = label_encoder.fit_transform(labels)
 
+    print(f"### Training kNN ...")
     best_score = 0
     best_model = None
     for i in range(2, 33):
@@ -57,6 +85,7 @@ def classify(data, labels):
 
 def plot(knn, X, y, labels):
     # Reduce dimensionality to 2D using PCA
+    print("PCA dimensionality reduction")
     pca = PCA(n_components=2)
     X_reduced = pca.fit_transform(X)
 
@@ -86,7 +115,7 @@ def plot(knn, X, y, labels):
     # Debugging steps to inspect Z
     print(f"Z shape: {Z.shape}")
     print(f"Z data type: {Z.dtype}")
-    print(f"Unique values in Z: {np.unique(Z)}")  # these should be the labels as integers
+    print(f"Unique values in Z: {len(np.unique(Z))} -> {np.unique(Z)}")  # these should be the labels as integers
 
     # Put result into a color plot
     print("Putting result into color plot")
@@ -95,22 +124,22 @@ def plot(knn, X, y, labels):
     plt.contourf(xx, yy, Z, cmap=cmap_light)
 
     # Select a subset of data points to plot
-    subset_size = 250
+    subset_size = len(X_reduced)  # len(X_reduced), or any other int
     indices = np.random.choice(range(X_reduced.shape[0]), size=subset_size, replace=False)
     X = X_reduced[indices]
     y = y[indices]
 
     # Plot training points
     print("Plotting")
-    plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold, edgecolor='k', s=20)
+    plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold, edgecolor='k', s=10)
     plt.xlim(xx.min(), xx.max())
     plt.ylim(yy.min(), yy.max())
     plt.title(f"32-class classification - neighbors: {knn.get_params()['n_neighbors']}")
     plt.xlabel('PC 1')
     plt.ylabel('PC 2')
 
-    handles = [plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=cmap_bold(i), markersize=8, label=labels[i]) for i in range(len(labels))]
-    plt.legend(handles=handles, title="Classes", bbox_to_anchor=(1, 1), loc='upper left')
+    handles = [plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=cmap_bold(i), markersize=6, label=labels[i]) for i in range(len(labels))]
+    plt.legend(handles=handles, title="Chords", bbox_to_anchor=(1, 1), loc='upper left')
 
     plt.tight_layout()
     plt.savefig('knn_classification.png')
@@ -120,5 +149,6 @@ def plot(knn, X, y, labels):
 
 if __name__ == "__main__":
     data, labels = load_data()
+    data = preprocess_data(data)
     best_model, y_encoded = classify(data, labels)
     plot(best_model, data, y_encoded, labels)
