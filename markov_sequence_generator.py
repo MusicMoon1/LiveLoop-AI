@@ -68,11 +68,11 @@ def generate_new_sequence(start=None, transition_states=None, size=100):
     # start = next(iter(transition_states))
     if not start:
         start = list(transition_states)[np.random.randint(len(list(transition_states)))]
-
-    # Start with Sequence starting with start chord
-    # Get first states of transition states
-    starting_states = [key for key in transition_states.keys() if key[0] == start]
-    start = starting_states[np.random.randint(0, len(starting_states))]
+    else:
+        # Start with Sequence starting with start chord
+        # Get first states of transition states
+        starting_states = [key for key in transition_states.keys() if key[0] == start]
+        start = starting_states[np.random.randint(0, len(starting_states))]
 
     # Initialise New Sequence with starting points
     new_sequence = list(start)
@@ -202,11 +202,10 @@ def main():
     """ Runs Estimation, Chord Sequence Generation and MIDI File Creation """
 
     # Settings for Markov Chain
-    m_order = 2                 # Order for Markov Chain
-    path = "data/jams"          # Path to Jams
+    m_order = 4
 
     # Learn Chord Progressions for Markov Chain
-    generate_transition_matrix(path, m_order=m_order)
+    generate_transition_matrix("data/jams", m_order=m_order)
 
     print('Saved Transition Matrix and Unique Chords to transition_matrix.pkl and unique_midi_chords.pkl')
 

@@ -34,10 +34,14 @@ def get_chord_from_audio(audiofile):
 
     # Find Closest Chord
     chord_length = len(all_notes_transposed)
-    # limit length to 4 notes
-    if chord_length > 4:
-        chord_length = 4
-        input_chord = all_notes_transposed[:4]
+
+    # Chord Limit to Triad
+    chord_lim = 3
+
+    # limit length to n notes
+    if chord_length > chord_lim:
+        chord_length = chord_lim
+        input_chord = all_notes_transposed[:chord_lim]
     else:
         input_chord = all_notes_transposed
         chord_length = len(input_chord)
@@ -47,8 +51,9 @@ def get_chord_from_audio(audiofile):
 
 def get_weighted_distance(chord1, chord2, weight):
     """Calculate weighted Euclidean distance between two chords"""
-    weighted_diff = (chord1[0] - chord2[0]) ** 2 * weight
-    regular_diff = np.sum((np.array(chord1[1:]) - np.array(chord2[1:])) ** 2)
+    weighted_diff = (chord1[0] - chord2[0]) * weight
+    weighted_diff += (chord1[1] - chord2[1]) * weight
+    regular_diff = np.sum((np.array(chord1[2:]) - np.array(chord2[2:])))
     return np.sqrt(weighted_diff + regular_diff)
 
 
