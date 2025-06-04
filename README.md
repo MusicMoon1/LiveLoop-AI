@@ -14,3 +14,6 @@ conda activate genmus_bcn2024
 </code>
 
 Basic Pitch needs Tensorflow and Python 3.11 to install the correct dependencies.
+
+
+Loop: 5 seconds

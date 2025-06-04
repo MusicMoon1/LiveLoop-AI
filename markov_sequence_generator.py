@@ -3,7 +3,6 @@ import os
 import pickle
 import numpy as np
 
-from music21 import stream, chord, meter
 from chord_to_midi import chord_to_midi
 
 
@@ -28,21 +27,19 @@ def get_progressions(files: list[str] = None) -> list[list[str]]:
 
 
 def compute_transition_chain(sequence, m_order=2):
-    """
-    ---- Compute Transition Chain for Markov Chain ----
+    """ --- Compute Transition Chain for Markov Chain ---
     Parameters:
-        sequence (np.ndarray): Sequence
+        sequence (np.ndarray): Sequence (e.g. notes from a chord progression)
         m_order (int): Order for Markov Chain
     Returns:
         transition_states (dict): Transition States
     """
-    # Initialise Transition States Dict
-    transition_states = {}
-    # Iterate Through Sequence
+    transition_states = {}  # init dict for transition states
+
+    # iterate through sequence
     for i in range(m_order, len(sequence)):
-        # Get Current State
-        current_state = tuple(sequence[i])
-        # Get n Previous States
+        current_state = tuple(sequence[i])   # get current state
+        # Get n previous states
         prev_states = sequence[i - m_order:i]
         prev_states = tuple([tuple(s) for s in prev_states])
         # Create Key if not existant
@@ -56,13 +53,12 @@ def compute_transition_chain(sequence, m_order=2):
 
 
 def generate_new_sequence(start=None, transition_states=None, size=100):
-    """
-    ---- Generate New Sequence from Transition States ----
+    """ --- Generate New Sequence from Transition States ---
     Parameters:
         transition_states (dict): Transition States
         size (int): Output Size
     Returns:
-        new_sequence (np.ndarray): New Sequence
+        new_sequence (np.ndarray): New Sequence (i.e. notes)
     """
     # Get Starting Point
     # start = next(iter(transition_states))
@@ -85,7 +81,7 @@ def generate_new_sequence(start=None, transition_states=None, size=100):
         if tuple(current_state) in list(transition_states.keys()):
             potential_next_states = transition_states[tuple(current_state)]
         else:
-            # If State does not exist Lower Order
+            # If State does not exist, lower the order
             potential_next_states = get_lower_order_state(transition_states, current_state)
         # Pick Random State from Potential States
         next_state = potential_next_states[np.random.randint(0, len(potential_next_states))]
@@ -96,8 +92,7 @@ def generate_new_sequence(start=None, transition_states=None, size=100):
 
 
 def get_lower_order_state(transition_states, current_state):
-    """
-    ---- Recursively Get Lower Order Transition States ----
+    """ --- Recursively Get Lower Order Transition States ---
     Parameters:
         transition_states (dict): Original Order Transition States
         current_state (tuple): Current State
@@ -137,37 +132,9 @@ def chords_to_midi_notes(new_sequence: list[str]) -> list[list[int]]:
 def get_unique_midi_chords(chord_progressions_all: list[str]) -> tuple[list[str], dict[str, int], dict[int, str]]:
     """ Get unique chords and create a mapping between chord notation and index """
     unique_chords = list(set(chord_progressions_all))
-    chtoi = {ch: i for i, ch in enumerate(unique_chords)}
-    itoch = {v: k for k, v in chtoi.items()}
-    return unique_chords, chtoi, itoch
-
-
-def create_midi_file(new_sequence_midi: list[list[int]], chord_duration: float = 2, file_name='midi') -> None:
-    """ Create MIDI File from List of MIDI Notes """
-    # Create a music21 score
-    score = stream.Score()
-    # Define a 4/4 time signature
-    time_signature = meter.TimeSignature('4/4')
-    score.append(time_signature)
-
-    # Create a part for the chords
-    chord_part = stream.Part()
-
-    # Iterate over the list of MIDI chords and add them to the part
-    for midi_notes in new_sequence_midi:
-        # Create a chord from the MIDI notes
-        m21_chord = chord.Chord(midi_notes)
-        m21_chord.duration.quarterLength = chord_duration
-        # Add the chord to the part
-        chord_part.append(m21_chord)
-
-    # Add the part to the score
-    score.append(chord_part)
-
-    # Save the score to a MIDI file
-    midi_file_path = f'data/midi/{file_name}.mid'
-    score.write('midi', fp=midi_file_path)
-    print(f"MIDI file saved to {midi_file_path}")
+    ch2i = {ch: i for i, ch in enumerate(unique_chords)}
+    i2ch = {v: k for k, v in ch2i.items()}
+    return unique_chords, ch2i, i2ch
 
 
 def generate_transition_matrix(data_path, m_order: int = 3) -> None:
@@ -199,7 +166,7 @@ def generate_transition_matrix(data_path, m_order: int = 3) -> None:
 
 
 def main():
-    """ Runs Estimation, Chord Sequence Generation and MIDI File Creation """
+    """ Computes unique chords and the transition chain/matrix """
 
     # Settings for Markov Chain
     m_order = 4
