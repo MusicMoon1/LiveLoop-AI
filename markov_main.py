@@ -39,6 +39,9 @@ def main_process(unique_midi_chords, transition_matrix, file_name, input_type):
     # Settings for new sequence
     chord_duration = 2
     out_size = 8
+    out_size = chord_length * 2  # e.g. if 2 input chords, create 4 output chords
+    # but chord_length is not number of chords, just number of notes in chord
+    # in sequence generation, this number is used to count the tuples (which are chords)
 
     # Generate New Sequence
     new_sequence = generate_new_sequence(closest_chord, transition_matrix, size=out_size)
@@ -59,7 +62,7 @@ def main():
     # for file_name in file_names:
     #     main_process(unique_midi_chords, transition_matrix, file_name, input_type)
     file_name = "data/wav/c_e_fsharp.wav"
-    main_process(unique_midi_chords, transition_matrix, file_name, input_type)
+    #main_process(unique_midi_chords, transition_matrix, file_name, input_type)
 
     ### FOR MIDI FILES
     input_type = "midi"

@@ -59,26 +59,39 @@ def generate_new_sequence(start=None, transition_states=None, size=100):
         size (int): Output Size
     Returns:
         new_sequence (np.ndarray): New Sequence (i.e. notes)
+    Example:
+        ((63, 67, 70, 72), (63, 67, 70, 74), (63, 67, 70, 72), (64, 67, 70)): [(65, 68, 72, 75), (65, 68, 72, 75), (65, 68, 72, 75)]
+        left side: last 4 chords in the sequence. right side: the next chord that followed
+        So: in the pre-learned data, when the last 4 chords in the sequence were that (left),
+        the next chord was always (65, 68, 72, 75), and that happened 3 times in that data.
+        If the right side was: [(65, 68, 72, 75), (70, 74, 77, 80)], then each chord would have 50% chance of being chosen
+        Thus: probabilites are encoded by repetition / inferred through random sampling with repetition
+        So: Looking for keys that match the given start chord ensures the generated sequence begins in a musically meaningful way
+        that connects to the trained data.
+        If a tuple appears several times in the keys, it was just part of the musical phrase's pattern.
+        Also: each key is a sequence of 4 chords -- means a 4th order Markov Chain
     """
-    # Get Starting Point
-    # start = next(iter(transition_states))
+    # Get Starting Point -- this could be an input chord (60, 64, 67)
     if not start:
+        # start = next(iter(transition_states))
         start = list(transition_states)[np.random.randint(len(list(transition_states)))]
     else:
-        # Start with Sequence starting with start chord
+        # Start with Sequence starting with input/start chord
         # Get first states of transition states
         starting_states = [key for key in transition_states.keys() if key[0] == start]
+        # randomly choose one from possible states: repeating entries increase their probability of being chosen
         start = starting_states[np.random.randint(0, len(starting_states))]
 
-    # Initialise New Sequence with starting points
+    # Initialise New Sequence with starting points/chords
     new_sequence = list(start)
 
     # Generate Sequence
     for _ in range(size):
-        # Get Current State
+        # Get Current State(s): Use the latest m_order (e.g. 4) elements of the sequence
+        # In first iteration, this will be the same as "start"
         current_state = new_sequence[-len(start):]
-        # Get Next State
-        if tuple(current_state) in list(transition_states.keys()):
+        # Get potential next state(s)
+        if tuple(current_state) in list(transition_states.keys()):  # in first iter, this will always be true
             potential_next_states = transition_states[tuple(current_state)]
         else:
             # If State does not exist, lower the order
@@ -87,11 +100,14 @@ def generate_new_sequence(start=None, transition_states=None, size=100):
         next_state = potential_next_states[np.random.randint(0, len(potential_next_states))]
         # Append Next State to Sequence
         new_sequence.append(next_state)
+        if len(new_sequence) == size:
+            print(f"New sequence reached size {size} as defined. Stopping generation.")
+            break
 
     return [list(s) for s in new_sequence]
 
 
-def get_lower_order_state(transition_states, current_state):
+def get_lower_order_state(transition_states, current_state): 
     """ --- Recursively Get Lower Order Transition States ---
     Parameters:
         transition_states (dict): Original Order Transition States
@@ -179,5 +195,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
