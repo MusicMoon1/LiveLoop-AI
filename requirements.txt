@@ -13,3 +13,4 @@ scikit-learn~=1.6.1
 python-osc~=1.9.3
 essentia~=2.1b6.dev1177
 pretty_midi~=0.2.10
+python-rtmidi~=1.5.8

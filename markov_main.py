@@ -13,10 +13,10 @@ def load_data():
         a) the list of unique MIDI chords
         b) the pre-computed transition matrix for chord sequences """
 
-    with open('unique_midi_chords.pkl', 'rb') as f:
+    with open("unique_midi_chords.pkl", "rb") as f:
         unique_midi_chords = pickle.load(f)
 
-    with open('transition_matrix.pkl', 'rb') as f:
+    with open("transition_matrix.pkl", "rb") as f:
         transition_matrix = pickle.load(f)
 
     return unique_midi_chords, transition_matrix
@@ -37,15 +37,17 @@ def main_process(unique_midi_chords, transition_matrix, file_name, input_type):
     print(f"Input chord: {input_chord}, chord length: {chord_length}\nMost similar chord: {closest_chord}, distance: {distance}")
 
     # Settings for new sequence
-    chord_duration = 2
+    chord_duration = 2  # beats
     out_size = 8
     out_size = chord_length * 2  # e.g. if 2 input chords, create 4 output chords
     # but chord_length is not number of chords, just number of notes in chord
     # in sequence generation, this number is used to count the tuples (which are chords)
+    # OR: if 2 bars input, create 4 bars output
 
     # Generate New Sequence
     new_sequence = generate_new_sequence(closest_chord, transition_matrix, size=out_size)
     create_midi_file(new_sequence, chord_duration=chord_duration, file_name=file_name)
+    return new_sequence
 
 
 def main():
@@ -53,23 +55,24 @@ def main():
 
     ### SELECT BLOCK ###
 
-    ### FOR AUDIO FILES
-    # Process all files in the directory (this contained simple melody loops)
-    input_type = "audio"
-    print("### Estimating pitches with Essentia")
+    ### FOR AUDIO FILES (INVOLVES MULTI-PITCH ESTIMATION)
+    ### Process all files in the directory (this contained simple melody loops)
+    # input_type = "audio"
     # loops_path = "data/loops"  # e.g. "Loop1_ragtime"
     # file_names = os.listdir(loops_path)
     # for file_name in file_names:
     #     main_process(unique_midi_chords, transition_matrix, file_name, input_type)
-    file_name = "data/wav/c_e_fsharp.wav"
-    #main_process(unique_midi_chords, transition_matrix, file_name, input_type)
+    # file_name = "data/wav/c_e_fsharp.wav"
+    # main_process(unique_midi_chords, transition_matrix, file_name, input_type)
 
     ### FOR MIDI FILES
     input_type = "midi"
     print("### Reading notes from MIDI")
     file_name = "data/midi/c_e_fsharp.mid"
-    main_process(unique_midi_chords, transition_matrix, file_name, input_type)
+    new_chord_sequence = main_process(unique_midi_chords, transition_matrix, file_name, input_type)
 
+    print(f"new_chord_sequence: {new_chord_sequence}")
+    return new_chord_sequence
 
 if __name__ == "__main__":
     main()

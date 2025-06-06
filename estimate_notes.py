@@ -5,11 +5,16 @@ import pretty_midi as pm
 
 
 def transpose_notes(notes, octave=0):
-    """ Transpose Notes to an Octave Above 60 """
+    """ Transpose Notes to an Octave Above 60, and keeps it below 73.
+    NOTE: param: octave: what is this good for? """
+    if min(notes) > 72:
+        notes = [int(note)-12 for note in notes if note > 72]
+    
     if min(notes) >= 60:
         return notes
-    notes = [int(note) + 12 for note in notes]
+    notes = [int(note)+12 for note in notes]
     octave += 1
+    
     return transpose_notes(notes, octave)
 
 
